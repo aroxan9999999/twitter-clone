@@ -1,0 +1,47 @@
+version: '3.2'
+
+services:
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+    networks:
+      - my_network
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    networks:
+      - my_network
+    env_file:
+      - .env
+
+  db:
+    image: postgres:latest
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $POSTGRES_DB -U $POSTGRES_USER"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./db/:/var/lib/postgresql/data
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge
